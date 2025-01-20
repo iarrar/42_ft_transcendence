@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transcendence</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        .nav-link {
+            cursor: pointer;
+        }
+        #signOutBtn {
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        /* Prevent background from getting darker on tab switch */
+        .modal-backdrop + .modal-backdrop {
+            opacity: 0;
+        }
+
+        @font-face {
+        font-family: 'ScoreFont';
+        src: url('m_font/RideTheFader-1XKg.ttf') format('truetype');
+        font-weight: normal;
+        font-style: normal;
+        }
+
+        .friend-card {
+        transition: all 0.3s ease;
+        }
+
+        .friend-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .badge {
+        font-size: 0.8em;
+        }
+
+    </style>
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="Three3D/EffectComposer.js" type="module"></script>
+    <script src="Three3D/RenderPass.js" type="module"></script>
+    <script src="Three3D/UnrealBloomPass.js" type="module"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Transcendence</a>
+            <div class="navbar-nav">
+                <a class="nav-link" id="homeBtn" href="#">Home</a>
+                <a class="nav-link" id="gameBtn" href="#">Game</a>
+                <a class="nav-link" id="userBtn" href="#">Profile</a>
+                <a class="nav-link" id="tournamentBtn" href="#">Tournament</a>
+                <a class="nav-link" id="friendsBtn" href="#">Friends</a>
+                <span class="nav-link" id="welcomeMessage"></span>
+                <i class="fas fa-sign-out-alt" id="signOutBtn" title="Sign Out"></i>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4" role="main">
+        <div id="home" class="tab-content"></div>
+        <div id="game" class="tab-content"></div>
+        <div id="user" class="tab-content"></div>
+        <div id="tournament" class="tab-content"></div>
+        <div id="3d_pong" class="tab-content"></div>
+        <div id="leaderboard" class="tab-content"></div>
+        <div id="friends" class="tab-content"></div>
+    </div>
+
+    <!-- Auth Modal -->
+    <div class="modal fade" id="authModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="authModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="authModalLabel">Sign In / Sign Up</h5>
+                </div>
+                <div class="modal-body">
+                    <ul class="nav nav-tabs" id="authTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="signin-tab" data-bs-toggle="tab" data-bs-target="#signin" type="button" role="tab" aria-controls="signin" aria-selected="true">Sign In</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="signup-tab" data-bs-toggle="tab" data-bs-target="#signup" type="button" role="tab" aria-controls="signup" aria-selected="false">Sign Up</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="authTabContent">
+                        <div class="tab-pane fade show active" id="signin" role="tabpanel" aria-labelledby="signin-tab">
+                            <form id="signinForm">
+                                <div class="mb-3">
+                                    <label for="signinUsername" class="form-label">Username</label>
+                                    <input type="text" class="form-control" id="signinUsername" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="signinPassword" class="form-label">Password</label>
+                                    <input type="password" class="form-control" id="signinPassword" required>
+                                </div>
+                                <button id="oauth42Button">Login with 42</button>
+                                <button type="submit" class="btn btn-primary">Sign In</button>
+                            </form>
+                        </div>
+                        <div class="tab-pane fade" id="signup" role="tabpanel" aria-labelledby="signup-tab">
+                            <form id="signupForm">
+                                <div class="mb-3">
+                                    <label for="signupUsername" class="form-label">Username</label>
+                                    <input type="text" class="form-control" id="signupUsername" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="signupEmail" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="signupEmail" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="signupPassword" class="form-label">Password</label>
+                                    <input type="password" class="form-control" id="signupPassword" required>
+                                </div>
+                                <div class="mb-3 form-check">
+                                    <label class="form-check-label" for="enable2FA">Enable 2FA</label>
+                                    <input type="checkbox" class="form-check-input" id="enable2FA">
+                                </div>
+                                <body>
+                                    <script type="text/javascript">
+                                        document.getElementById('oauth42Button').addEventListener('click', () => {
+                                            window.location.href = 'http://localhost:8000/api/42/login/';
+                                        });
+                                        function getQueryParams() {
+                                            const params = {};
+                                            window.location.search.substring(1).split('&').forEach(pair => {
+                                                const [key, value] = pair.split('=');
+                                                params[decodeURIComponent(key)] = decodeURIComponent(value);
+                                            });
+                                            return params;
+                                        }
+
+                                        document.addEventListener('DOMContentLoaded', () => {
+                                            const params = getQueryParams();
+                                            if (params.access) {
+                                                localStorage.setItem('access_token', params.access);
+                                                localStorage.setItem('refresh_token', params.refresh);
+                                                localStorage.setItem('username', params.username);
+                                                // Redirige ou affiche une page d'accueil
+                                                alert('Connexion réussie !');
+                                                // window.location.href = '/';
+                                            }
+                                        });
+                                    </script>
+                                </body>
+                                <button type="submit" class="btn btn-primary">Sign Up</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- OTP Modal -->
+    <div class="modal fade" id="otpModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="otpModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="otpModalLabel">Enter OTP</h5>
+                </div>
+                <div class="modal-body">
+                    <form id="otpForm">
+                        <div class="mb-3">
+                            <label for="otpInput" class="form-label">OTP</label>
+                            <input type="text" class="form-control" id="otpCode" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Verify OTP</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- <script> src="Three3D/EffectComposer.js" </script>
+    <script> src="Three3D/RenderPass.js" </script>
+    <script> src="Three3D/UnrealBloomPass.js" </script> -->
+    <script src="auth.js"></script>
+    <script src="main.js"></script>
+    <script src="home.js"></script>
+    <script src="game.js"></script>
+    <script src="user.js"></script>
+    <script src="tournament.js"></script>
+    <script src="3d_pong.js"></script>
+    <script src="leaderboard.js"></script>
+    <script src="match-history.js"></script>
+    <script src="friends.js"></script>
+</body>
+</html>
